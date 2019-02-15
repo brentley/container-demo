@@ -21,6 +21,7 @@ export security_group=$(aws cloudformation describe-stacks --stack-name fargate-
 
 ## Configure ecs-cli to talk to your cluster:
 ```
+export AWS_DEFAULT_REGION=ap-southeast-1 # set this appropriately for your region
 ecs-cli configure --region $AWS_DEFAULT_REGION --cluster $clustername --default-launch-type FARGATE --config-name fargate-demo
 ```
 
