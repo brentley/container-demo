@@ -75,7 +75,6 @@ ecs-cli compose --project-name ecsdemo-frontend service scale 3 \
 ecs-cli compose --project-name ecsdemo-frontend service ps \
     --cluster-config fargate-demo
 ```
-
 We can see that our containers have now been evenly distributed across all 3 of our
 availability zones.
 
@@ -92,14 +91,14 @@ ecs-cli compose --project-name ecsdemo-nodejs service up \
 
 ```
 
-scale the tasks:
+## scale the tasks:
 ```
 ecs-cli compose --project-name ecsdemo-nodejs service scale 3 \
     --cluster-config fargate-demo
     
 ```
 
-bring up crystal backend api:
+## bring up crystal backend api:
 ```
 cd ~/environment/ecsdemo-crystal
 envsubst <ecs-params.yml.template >ecs-params.yml
@@ -112,14 +111,14 @@ ecs-cli compose --project-name ecsdemo-crystal service up \
 
 ```
 
-scale the tasks:
+## scale the tasks:
 ```
 ecs-cli compose --project-name ecsdemo-crystal service scale 3 \
     --cluster-config fargate-demo
     
 ```
 
-cleanup:
+## cleanup:
 ```
 cd ~/environment/ecsdemo-frontend
 ecs-cli compose --project-name ecsdemo-frontend service down --cluster-config fargate-demo
