@@ -11,6 +11,20 @@ sudo chmod +x /usr/local/bin/ecs-cli
 ```
 This installs some handy text parsing utilities, and the latest ecs-cli.
 
+## Clone this demo repository:
+```
+cd ~/environment
+git clone https://github.com/brentley/fargate-demo.git
+```
+
+## Clone our application microservice repositories:
+```
+cd ~/environment
+git clone https://github.com/brentley/ecsdemo-frontend.git
+git clone https://github.com/brentley/ecsdemo-nodejs.git
+git clone https://github.com/brentley/ecsdemo-crystal.git
+```
+
 ## Build a VPC, ECS Cluster, and ALB:
 ```
 aws cloudformation deploy --stack-name fargate-demo --template-file cluster-fargate-private-vpc.yml --capabilities CAPABILITY_IAM
@@ -34,7 +48,7 @@ ecs-cli configure --region $AWS_DEFAULT_REGION --cluster $clustername --default-
 We set a default region so we can reference the region when we run our commands.
 
 
-## Authorize traffic
+## Authorize traffic:
 ```
 aws ec2 authorize-security-group-ingress --group-id "$security_group" --protocol tcp --port 3000 --cidr 0.0.0.0/0
 ```
