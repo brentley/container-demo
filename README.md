@@ -1,9 +1,15 @@
 ## Bring up a cloud9 IDE and run these prerequisite commands:
 ```
+# Choose your region, and store it in this environment variable
+export AWS_DEFAULT_REGION=ap-southeast-1 
+echo "export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION >> ~/.bashrc"
+
+# Install software
 sudo yum -y install jq gettext
 sudo curl -so /usr/local/bin/ecs-cli https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest
 sudo chmod +x /usr/local/bin/ecs-cli
 ```
+This installs some handy text parsing utilities, and the latest ecs-cli.
 
 ## Build a VPC, ECS Cluster, and ALB:
 ```
@@ -18,18 +24,21 @@ export subnet_2=$(aws cloudformation describe-stacks --stack-name fargate-demo -
 export subnet_3=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`PrivateSubnetThree`].OutputValue' --output text)
 export security_group=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`ContainerSecurityGroup`].OutputValue' --output text)
 ```
+This creates our infrastructure, and sets several environment variables we will use to
+automate deploys.
 
-## Configure ecs-cli to talk to your cluster:
+## Configure `ecs-cli` to talk to your cluster:
 ```
-export AWS_DEFAULT_REGION=ap-southeast-1 # set this appropriately for your region
 ecs-cli configure --region $AWS_DEFAULT_REGION --cluster $clustername --default-launch-type FARGATE --config-name fargate-demo
 ```
+We set a default region so we can reference the region when we run our commands.
+
 
 ## Authorize traffic
-We know that our containers talk on port 3000, so authorize that traffic on our security group:
 ```
 aws ec2 authorize-security-group-ingress --group-id "$security_group" --protocol tcp --port 3000 --cidr 0.0.0.0/0
 ```
+We know that our containers talk on port 3000, so authorize that traffic on our security group:
 
 ## Deploy our frontend application:
 ```
@@ -47,29 +56,39 @@ ecs-cli compose --project-name ecsdemo-frontend service up \
     --vpc $vpc
     
 ```
+Here, we change directories into our frontend application code directory.
+The `envsubst` command templates our `ecs-params.yml` file with our current values.
+We then launch our frontend service on our ECS cluster (with a default launchtype 
+of Fargate)
+
 Note: ecs-cli will take care of building our private dns namespace for service discovery,
 and log group in cloudwatch logs.
 
-## view running container:
+## View running container:
 ```
 ecs-cli compose --project-name ecsdemo-frontend service ps \
     --cluster-config fargate-demo
 ```
+We should have one task registered.
 
-## check reachability (open url in your browser):
+## Check reachability (open url in your browser):
 ```
 alb_url=$(aws cloudformation describe-stacks --stack-name fargate-demo-alb --query 'Stacks[0].Outputs[?OutputKey==`ExternalUrl`].OutputValue' --output text)
 echo "Open $alb_url in your browser"
 ```
+This command looks up the URL for our ingress ALB, and outputs it. You should 
+be able to click to open, or copy-paste into your browser.
 
-## view logs:
+## View logs:
 ```
 #substitute your task id from the ps command 
 ecs-cli logs --task-id a06a6642-12c5-4006-b1d1-033994580605 \
     --follow --cluster-config fargate-demo
 ```
+To view logs, find the task id from the earlier `ps` command, and use it in this
+command. You can follow a task's logs also.
 
-## scale the tasks:
+## Scale the tasks:
 ```
 ecs-cli compose --project-name ecsdemo-frontend service scale 3 \
     --cluster-config fargate-demo
@@ -79,7 +98,7 @@ ecs-cli compose --project-name ecsdemo-frontend service ps \
 We can see that our containers have now been evenly distributed across all 3 of our
 availability zones.
 
-## bring up nodejs backend api:
+## Bring up NodeJS backend api:
 ```
 cd ~/environment/ecsdemo-nodejs
 envsubst <ecs-params.yml.template >ecs-params.yml
@@ -91,15 +110,20 @@ ecs-cli compose --project-name ecsdemo-nodejs service up \
     --vpc $vpc
 
 ```
+Just like earlier, we are now bringing up one of our backend API services.
+This service is not registered with any ALB, and instead is only reachable by 
+private IP in the VPC, so we will use service discovery to talk to it.
 
-## scale the tasks:
+## Scale the tasks:
 ```
 ecs-cli compose --project-name ecsdemo-nodejs service scale 3 \
     --cluster-config fargate-demo
     
 ```
+We can see that our containers have now been evenly distributed across all 3 of our
+availability zones.
 
-## bring up crystal backend api:
+## Bring up Crystal backend api:
 ```
 cd ~/environment/ecsdemo-crystal
 envsubst <ecs-params.yml.template >ecs-params.yml
@@ -111,15 +135,24 @@ ecs-cli compose --project-name ecsdemo-crystal service up \
     --vpc $vpc
 
 ```
+Just like earlier, we are now bringing up one of our backend API services.
+This service is not registered with any ALB, and instead is only reachable by 
+private IP in the VPC, so we will use service discovery to talk to it.
 
-## scale the tasks:
+## Scale the tasks:
 ```
 ecs-cli compose --project-name ecsdemo-crystal service scale 3 \
     --cluster-config fargate-demo
     
 ```
+We can see that our containers have now been evenly distributed across all 3 of our
+availability zones.
 
-## cleanup:
+## Conclusion:
+You should now have 3 services, each running 3 tasks, spread across 3 availability zones.
+Additionally you should have zero instances to manage. :)
+
+## Cleanup:
 ```
 cd ~/environment/ecsdemo-frontend
 ecs-cli compose --project-name ecsdemo-frontend service down --cluster-config fargate-demo
