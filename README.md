@@ -12,31 +12,20 @@ aws cloudformation deploy --stack-name fargate-demo-alb --template-file alb-exte
 export clustername=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`ClusterName`].OutputValue' --output text)
 export target_group_arn=$(aws cloudformation describe-stack-resources --stack-name fargate-demo-alb | jq -r '.[][] | select(.ResourceType=="AWS::ElasticLoadBalancingV2::TargetGroup").PhysicalResourceId')
 
-ecs-cli configure --region ap-southeast-1 --cluster $clustername --default-launch-type FARGATE --config-name fargate-demo
-# ecs-cli up --capability-iam
-```
+#ecs-cli configure --region ap-southeast-1 --cluster $clustername --default-launch-type FARGATE --config-name fargate-demo
+ecs-cli configure --region $AWS_DEFAULT_REGION --cluster $clustername --default-launch-type FARGATE --config-name fargate-demo
 
 export vpc=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`VpcId`].OutputValue' --output text)
 export subnet_1=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`PrivateSubnetOne`].OutputValue' --output text)
 export subnet_2=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`PrivateSubnetTwo`].OutputValue' --output text)
 export subnet_3=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`PrivateSubnetThree`].OutputValue' --output text)
-#export subnets=($(aws cloudformation describe-stack-resources --stack-name fargate-demo | jq -r '.[][] | select(.ResourceType=="AWS::EC2::Subnet") | select(.LogicalResourceId=="PrivateSubnetOne" or .LogicalResourceId=="PrivateSubnetTwo" or .LogicalResourceId=="PrivateSubnetThree").PhysicalResourceId'))
-#export security_group_id=$(aws ec2 create-security-group --group-name "fargate-demo" --description "Allow Fargate Demo Web Traffic" --vpc-id "$vpc" | jq -r '.GroupId')
 export security_group=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`ContainerSecurityGroup`].OutputValue' --output text)
-
-#export security_group=$security_group_id
-#export subnet_1=$(echo ${subnets[0]})
-#export subnet_2=$(echo ${subnets[1]})
-#export subnet_3=$(echo ${subnets[2]})
 
 aws ec2 authorize-security-group-ingress --group-id "$security_group" --protocol tcp --port 3000 --cidr 0.0.0.0/0
 
 cd ~/environment/ecsdemo-frontend
 envsubst < ecs-params.yml.template >ecs-params.yml
 
-```
-
-```
 ecs-cli compose --project-name ecsdemo-frontend service up \
     --create-log-groups \
     --target-group-arn $target_group_arn \
@@ -101,7 +90,8 @@ ecs-cli compose --project-name ecsdemo-crystal service up \
     --enable-service-discovery \
     --container-name ecsdemo-crystal \
     --container-port 3000 \
-    --cluster-config fargate-demo
+    --cluster-config fargate-demo \
+    --vpc $vpc
 
 ```
 
