@@ -49,16 +49,23 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       TargetType: ip
-      HealthCheckIntervalSeconds: 6
-      HealthCheckPath: /
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /health
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: '200-299'
       Port: 80
       Protocol: HTTP
-      UnhealthyThresholdCount: 2
+      UnhealthyThresholdCount: 10
       VpcId:
         Fn::ImportValue: !Sub ${EnvironmentName}:VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '5'
+      - Key: slow_start.duration_seconds
+        Value: '60'
   PublicLoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn:
