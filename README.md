@@ -26,12 +26,20 @@ git clone https://github.com/brentley/ecsdemo-crystal.git
 ```
 
 ## Build a VPC, ECS Cluster, and ALB:
+![infrastructure](images/private-subnet-public-lb.png)
 ```
 cd ~/environment/fargate-demo
 
 aws cloudformation deploy --stack-name fargate-demo --template-file cluster-fargate-private-vpc.yml --capabilities CAPABILITY_IAM
 aws cloudformation deploy --stack-name fargate-demo-alb --template-file alb-external.yml
+```
+At a high level, we are building what you see in the diagram. We will have 3 
+availability zones, each with a public and private subnet. The public subnets
+will hold service endpoints, and the private subnets will be where our workloads run.
+Where the image shows an instance, we will have containers on AWS Fargate.
 
+## Set environment variables from our build
+```
 export clustername=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`ClusterName`].OutputValue' --output text)
 export target_group_arn=$(aws cloudformation describe-stack-resources --stack-name fargate-demo-alb | jq -r '.[][] | select(.ResourceType=="AWS::ElasticLoadBalancingV2::TargetGroup").PhysicalResourceId')
 export vpc=$(aws cloudformation describe-stacks --stack-name fargate-demo --query 'Stacks[0].Outputs[?OutputKey==`VpcId`].OutputValue' --output text)
