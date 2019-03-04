@@ -1,0 +1,14 @@
+{
+  "PolicyName": "TrackOPSperTarget",
+  "ScalableDimension": "ecs:service:DesiredCount",
+  "ResourceId": "service/$clustername/ecsdemo-frontend",
+  "PolicyType": "TargetTrackingScaling",
+  "TargetTrackingScalingPolicyConfiguration": {
+    "TargetValue": 1000,
+    "PredefinedMetricSpecification": {
+      "PredefinedMetricType": "ALBRequestCountPerTarget",
+      "ResourceLabel": "$resource_label"
+    }
+   },
+  "ServiceNamespace": "ecs"
+}
