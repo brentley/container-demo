@@ -57,11 +57,12 @@ class BaseVPCStack(cdk.Stack):
 
 class FrontendECSService(cdk.Stack):
 
-    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, **kwargs):
+    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
         super().__init__(scope, id, **kwargs)
         self.ecs_cluster = ecs_cluster
         self.vpc = vpc
         self.services_3000_sec_group = services_3000_sec_group
+        self.desired_service_count = desired_service_count
 
         # This will create an ALB with listener/target group, ecs task def, ecs fargate service, logging in cloudwatch
         # and security group from ALB to containers. This essentially condenses 95 lines of code into 15.
@@ -73,7 +74,7 @@ class FrontendECSService(cdk.Stack):
             cpu=256,
             memory_limit_mi_b=512,
             enable_logging=True,
-            desired_count=3,
+            desired_count=self.desired_service_count,
             load_balancer_type=aws_ecs_patterns.LoadBalancerType('Application'),
             public_load_balancer=True,
             environment={
@@ -194,7 +195,9 @@ class FargateDemo(cdk.App):
         # Frontend service stack
         self.frontend_service = FrontendECSService(self, self.stack_name + "-frontend",
                                            self.base_module.ecs_cluster, self.base_module.vpc,
-                                           self.base_module.services_3000_sec_group)
+                                           self.base_module.services_3000_sec_group,
+                                           #desired_service_count=1)
+                                           desired_service_count=3)
 
         # Backend Crystal service
         self.backend_crystal_service = BackendCrystalECSService(self, self.stack_name + "-crystal-backend",

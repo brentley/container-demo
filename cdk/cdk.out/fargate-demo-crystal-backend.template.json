@@ -1,0 +1,238 @@
+{
+  "Resources": {
+    "BackendCrystalServiceTaskDefTaskRoleE8E528D8": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "ecs-tasks.",
+                      {
+                        "Ref": "AWS::URLSuffix"
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "fargate-demo-crystal-backend/BackendCrystalServiceTaskDef/TaskRole/Resource"
+      }
+    },
+    "BackendCrystalServiceTaskDef26B706B1": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Essential": true,
+            "Image": "adam9098/ecsdemo-crystal",
+            "Links": [],
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "AWSLogsDriverLogGroup8202534B"
+                },
+                "awslogs-stream-prefix": "ecsdemo-crystal",
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                }
+              }
+            },
+            "MountPoints": [],
+            "Name": "BackendCrystalServiceContainer",
+            "PortMappings": [],
+            "Ulimits": [],
+            "VolumesFrom": []
+          }
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "BackendCrystalServiceTaskDefExecutionRoleCAA2CD3F",
+            "Arn"
+          ]
+        },
+        "Family": "fargatedemocrystalbackendBackendCrystalServiceTaskDefE3D3E982",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE"
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "BackendCrystalServiceTaskDefTaskRoleE8E528D8",
+            "Arn"
+          ]
+        },
+        "Volumes": []
+      },
+      "Metadata": {
+        "aws:cdk:path": "fargate-demo-crystal-backend/BackendCrystalServiceTaskDef/Resource"
+      }
+    },
+    "BackendCrystalServiceTaskDefExecutionRoleCAA2CD3F": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "ecs-tasks.",
+                      {
+                        "Ref": "AWS::URLSuffix"
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "fargate-demo-crystal-backend/BackendCrystalServiceTaskDef/ExecutionRole/Resource"
+      }
+    },
+    "BackendCrystalServiceTaskDefExecutionRoleDefaultPolicy042A72E5": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "AWSLogsDriverLogGroup8202534B",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "BackendCrystalServiceTaskDefExecutionRoleDefaultPolicy042A72E5",
+        "Roles": [
+          {
+            "Ref": "BackendCrystalServiceTaskDefExecutionRoleCAA2CD3F"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "fargate-demo-crystal-backend/BackendCrystalServiceTaskDef/ExecutionRole/DefaultPolicy/Resource"
+      }
+    },
+    "AWSLogsDriverLogGroup8202534B": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 3
+      },
+      "DeletionPolicy": "Retain",
+      "Metadata": {
+        "aws:cdk:path": "fargate-demo-crystal-backend/AWSLogsDriver/LogGroup/Resource"
+      }
+    },
+    "BackendCrystalFargateServiceE093DC4C": {
+      "Type": "AWS::ECS::Service",
+      "Properties": {
+        "TaskDefinition": {
+          "Ref": "BackendCrystalServiceTaskDef26B706B1"
+        },
+        "Cluster": {
+          "Fn::ImportValue": "fargate-demo-base:ExportsOutputRefECSCluster7D463CD47A8DFE2F"
+        },
+        "DeploymentConfiguration": {
+          "MaximumPercent": 100,
+          "MinimumHealthyPercent": 0
+        },
+        "DesiredCount": 3,
+        "LaunchType": "FARGATE",
+        "LoadBalancers": [],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "SecurityGroups": [
+              {
+                "Fn::ImportValue": "fargate-demo-base:ExportsOutputFnGetAttFrontendToBackendSecurityGroup70D70E25GroupIdA0B24B47"
+              }
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "fargate-demo-base:ExportsOutputRefBaseVPCPrivateSubnet1SubnetF99B1DA5401F53D2"
+              },
+              {
+                "Fn::ImportValue": "fargate-demo-base:ExportsOutputRefBaseVPCPrivateSubnet2Subnet883344066E29E43B"
+              },
+              {
+                "Fn::ImportValue": "fargate-demo-base:ExportsOutputRefBaseVPCPrivateSubnet3Subnet3FD941A2DACCC782"
+              }
+            ]
+          }
+        },
+        "ServiceName": "ecsdemo-crystal",
+        "ServiceRegistries": [
+          {
+            "RegistryArn": {
+              "Fn::GetAtt": [
+                "BackendCrystalFargateServiceCloudmapService63C6AA2B",
+                "Arn"
+              ]
+            }
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "fargate-demo-crystal-backend/BackendCrystalFargateService/Service"
+      }
+    },
+    "BackendCrystalFargateServiceCloudmapService63C6AA2B": {
+      "Type": "AWS::ServiceDiscovery::Service",
+      "Properties": {
+        "DnsConfig": {
+          "DnsRecords": [
+            {
+              "TTL": 60,
+              "Type": "A"
+            }
+          ],
+          "NamespaceId": {
+            "Fn::ImportValue": "fargate-demo-base:ExportsOutputFnGetAttECSClusterDefaultServiceDiscoveryNamespace5AC2D2BEIdF1FC3044"
+          },
+          "RoutingPolicy": "MULTIVALUE"
+        },
+        "HealthCheckCustomConfig": {
+          "FailureThreshold": 1
+        },
+        "Name": "ecsdemo-crystal",
+        "NamespaceId": {
+          "Fn::ImportValue": "fargate-demo-base:ExportsOutputFnGetAttECSClusterDefaultServiceDiscoveryNamespace5AC2D2BEIdF1FC3044"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "fargate-demo-crystal-backend/BackendCrystalFargateService/CloudmapService/Resource"
+      }
+    }
+  }
+}
