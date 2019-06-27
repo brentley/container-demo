@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# CDK v0.34.0
+# CDK v0.35.0
 from aws_cdk import (
     aws_ec2,
     aws_ecs,
@@ -70,9 +70,9 @@ class FrontendECSService(cdk.Stack):
             cluster=self.ecs_cluster,
             image=aws_ecs.ContainerImage.from_registry("brentley/ecsdemo-frontend"),
             container_port=3000,
-            cpu='256',
-            memory_mi_b='0.5GB',
-            create_logs=True,
+            cpu=256,
+            memory_limit_mi_b=512,
+            enable_logging=True,
             desired_count=3,
             load_balancer_type=aws_ecs_patterns.LoadBalancerType('Application'),
             public_load_balancer=True,
@@ -117,13 +117,14 @@ class BackendCrystalECSService(cdk.Stack):
 
         self.task_definition = aws_ecs.FargateTaskDefinition(
             self, "BackendCrystalServiceTaskDef",
-            cpu='256',
-            memory_mi_b='0.5GB',
+            cpu=256,
+            memory_limit_mi_b=512,
         )
 
         self.task_definition.add_container(
             "BackendCrystalServiceContainer",
-            image=aws_ecs.ContainerImage.from_registry("brentley/ecsdemo-crystal"),
+            image=aws_ecs.ContainerImage.from_registry("adam9098/ecsdemo-crystal"),
+            #image=aws_ecs.ContainerImage.from_registry("brentley/ecsdemo-crystal"),
             logging=aws_ecs.AwsLogDriver(self, "AWSLogsDriver", stream_prefix="ecsdemo-crystal", log_retention_days=aws_logs.RetentionDays.ThreeDays),
         )
 
@@ -154,8 +155,8 @@ class BackendNodeECSService(cdk.Stack):
 
         self.task_definition = aws_ecs.FargateTaskDefinition(
             self, "BackendNodeServiceTaskDef",
-            cpu='256',
-            memory_mi_b='0.5GB',
+            cpu=256,
+            memory_limit_mi_b=512,
         )
 
         self.task_definition.add_container(
@@ -188,7 +189,7 @@ class FargateDemo(cdk.App):
         self.stack_name = "fargate-demo"
 
         # Base stack (networking, security groups, etc)
-        self.base_module = BaseVPCStack(self, self.stack_name)
+        self.base_module = BaseVPCStack(self, self.stack_name + "-base")
 
         # Frontend service stack
         self.frontend_service = FrontendECSService(self, self.stack_name + "-frontend",
