@@ -109,12 +109,14 @@ class FrontendECSService(cdk.Stack):
 
 class BackendCrystalECSService(cdk.Stack):
 
-    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, **kwargs):
+    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
         super().__init__(scope, id, **kwargs)
         self.ecs_cluster = ecs_cluster
         self.vpc = vpc
         self.service_discovery = self.ecs_cluster.default_namespace
         self.services_3000_sec_group = services_3000_sec_group
+        self.desired_service_count = desired_service_count
+
 
         self.task_definition = aws_ecs.FargateTaskDefinition(
             self, "BackendCrystalServiceTaskDef",
@@ -137,7 +139,7 @@ class BackendCrystalECSService(cdk.Stack):
             maximum_percent=100,
             minimum_healthy_percent=0,
             vpc_subnets=self.vpc.private_subnets,
-            desired_count=3,
+            desired_count=self.desired_service_count,
             service_discovery_options={
                 "name": "ecsdemo-crystal"
             },
@@ -147,12 +149,13 @@ class BackendCrystalECSService(cdk.Stack):
 
 class BackendNodeECSService(cdk.Stack):
 
-    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, **kwargs):
+    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
         super().__init__(scope, id, **kwargs)
         self.ecs_cluster = ecs_cluster
         self.vpc = vpc
         self.service_discovery = self.ecs_cluster.default_namespace
         self.services_3000_sec_group = services_3000_sec_group
+        self.desired_service_count = desired_service_count
 
         self.task_definition = aws_ecs.FargateTaskDefinition(
             self, "BackendNodeServiceTaskDef",
@@ -174,7 +177,7 @@ class BackendNodeECSService(cdk.Stack):
             maximum_percent=100,
             minimum_healthy_percent=0,
             vpc_subnets=self.vpc.private_subnets,
-            desired_count=3,
+            desired_count=self.desired_service_count,
             service_discovery_options={
                 "name": "ecsdemo-nodejs"
             },
@@ -196,18 +199,22 @@ class FargateDemo(cdk.App):
         self.frontend_service = FrontendECSService(self, self.stack_name + "-frontend",
                                            self.base_module.ecs_cluster, self.base_module.vpc,
                                            self.base_module.services_3000_sec_group,
-                                           #desired_service_count=1)
-                                           desired_service_count=3)
+                                           desired_service_count=1)
+                                           #desired_service_count=3)
 
         # Backend Crystal service
         self.backend_crystal_service = BackendCrystalECSService(self, self.stack_name + "-crystal-backend",
                                                             self.base_module.ecs_cluster,self.base_module.vpc,
-                                                            self.base_module.services_3000_sec_group)
+                                                            self.base_module.services_3000_sec_group,
+                                                            desired_service_count=1)
+                                                            #desired_service_count=3)
 
         # Backend Node.js service
         self.backend_node_service = BackendNodeECSService(self, self.stack_name + "-node-backend",
                                                             self.base_module.ecs_cluster,self.base_module.vpc,
-                                                            self.base_module.services_3000_sec_group)
+                                                            self.base_module.services_3000_sec_group,
+                                                            desired_service_count=1)
+                                                            #desired_service_count=3)
 
 
 if __name__ == '__main__':

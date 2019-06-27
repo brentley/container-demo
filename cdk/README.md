@@ -1,9 +1,14 @@
+## Status: Beta
 ## Bring up a cloud9 IDE and run these prerequisite commands:
 ```bash
 # Choose your region, and store it in this environment variable
 
 export AWS_DEFAULT_REGION=<aws-region-here> # Example region: us-west-2
 echo "export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION >> ~/.bashrc"
+
+# Install ecs-cli
+sudo curl -so /usr/local/bin/ecs-cli https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest
+sudo chmod +x /usr/local/bin/ecs-cli
 ```
 
 AWS CDK pre-requisites:
@@ -38,7 +43,7 @@ cd ~/environment
 git clone https://github.com/brentley/fargate-demo.git
 ```
 
-## Clone our application microservice repositories:
+## Clone our application microservice repositories. NOTE: This is not required, but simply an option to give you visibility into the services being deployed.
 ```bash
 cd ~/environment
 git clone https://github.com/brentley/ecsdemo-frontend.git
@@ -54,17 +59,6 @@ cd ~/environment/fargate-demo
 First, let's confirm that our code can properly synthesize and create the outputs.
 ```
 _cdk synth 
-```
-
-*Note: If you receive the following error:
-```
---app is required either in command-line, in cdk.json or in ~/.cdk.json
-```
-Create a file `cdk.json` with the following contents:
-```json
-{
-    "app": "python3 app.py"
-}
 ```
 
 You should now see CloudFormation templates in the `cdk.out` directory, along with some other files related to cdk deployment.
@@ -203,52 +197,78 @@ We can see that our containers have now been evenly distributed across all 3 of 
 availability zones.
 
 ## Bring up NodeJS backend api:
+```bash
+cd ~/environment
+_cdk diff fargate-demo-node-backend
+_cdk deploy fargate-demo-node-backend
 ```
-cd ~/environment/ecsdemo-nodejs
-envsubst <ecs-params.yml.template >ecs-params.yml
-ecs-cli compose --project-name ecsdemo-nodejs service up \
-    --create-log-groups \
-    --private-dns-namespace service \
-    --enable-service-discovery \
-    --cluster-config fargate-demo \
-    --vpc $vpc
 
-```
 Just like earlier, we are now bringing up one of our backend API services.
 This service is not registered with any ALB, and instead is only reachable by 
-private IP in the VPC, so we will use service discovery to talk to it.
+private IP in the VPC, so we will use service discovery to talk to it. 
+The containers will automatically register with CloudMap on launch.
 
 ## Scale the tasks:
+Open up in an editor of your choice `app.py`, and we will modify the frontend stack and up the desired count from 1 to 3. Simply comment the variable
+`desired_service_count=1`, and uncomment `desired_service_count=3`.
+
+```python
+# Backend Node.js service
+self.backend_node_service = BackendNodeECSService(self, self.stack_name + "-node-backend",
+                                                    self.base_module.ecs_cluster,self.base_module.vpc,
+                                                    self.base_module.services_3000_sec_group,
+                                                    #desired_service_count=1)
+                                                    desired_service_count=3)
 ```
-ecs-cli compose --project-name ecsdemo-nodejs service scale 3 \
-    --cluster-config fargate-demo
-    
+
+Let's run a diff to see what changes will be made, and then deploy!
+
 ```
-We can see that our containers have now been evenly distributed across all 3 of our
-availability zones.
+_cdk diff fargate-demo-node-backend
+_cdk deploy fargate-demo-node-backend
+```
+
+```
+ecs-cli ps
+```
 
 ## Bring up Crystal backend api:
+```bash
+cd ~/environment
+_cdk diff fargate-demo-crystal-backend
+_cdk deploy fargate-demo-crystal-backend
 ```
-cd ~/environment/ecsdemo-crystal
-envsubst <ecs-params.yml.template >ecs-params.yml
-ecs-cli compose --project-name ecsdemo-crystal service up \
-    --create-log-groups \
-    --private-dns-namespace service \
-    --enable-service-discovery \
-    --cluster-config fargate-demo \
-    --vpc $vpc
 
-```
 Just like earlier, we are now bringing up one of our backend API services.
 This service is not registered with any ALB, and instead is only reachable by 
-private IP in the VPC, so we will use service discovery to talk to it.
+private IP in the VPC, so we will use service discovery to talk to it. 
+The containers will automatically register with CloudMap on launch.
+```
 
 ## Scale the tasks:
+Open up in an editor of your choice `app.py`, and we will modify the frontend stack and up the desired count from 1 to 3. Simply comment the variable
+`desired_service_count=1`, and uncomment `desired_service_count=3`.
+
+```python
+# Backend Crystal service
+self.backend_crystal_service = BackendCrystalECSService(self, self.stack_name + "-crystal-backend",
+                                                    self.base_module.ecs_cluster,self.base_module.vpc,
+                                                    self.base_module.services_3000_sec_group,
+                                                    #desired_service_count=1)
+                                                    desired_service_count=3)
 ```
-ecs-cli compose --project-name ecsdemo-crystal service scale 3 \
-    --cluster-config fargate-demo
-    
+
+Let's run a diff to see what changes will be made, and then deploy!
+
 ```
+_cdk diff fargate-demo-crystal-backend
+_cdk deploy fargate-demo-crystal-backend
+```
+
+```
+ecs-cli ps
+```
+
 We can see that our containers have now been evenly distributed across all 3 of our
 availability zones.
 
@@ -258,18 +278,7 @@ Additionally you should have zero instances to manage. :)
 
 ## Cleanup:
 ```
-cd ~/environment/ecsdemo-frontend
-ecs-cli compose --project-name ecsdemo-frontend service down --cluster-config fargate-demo
-cd ~/environment/ecsdemo-nodejs
-ecs-cli compose --project-name ecsdemo-nodejs service down --cluster-config fargate-demo
-cd ~/environment/ecsdemo-crystal
-ecs-cli compose --project-name ecsdemo-crystal service down --cluster-config fargate-demo
-
-ecs-cli down --force --cluster-config fargate-demo
-aws cloudformation delete-stack --stack-name fargate-demo-alb
-aws cloudformation wait stack-delete-complete --stack-name fargate-demo-alb
-aws cloudformation delete-stack --stack-name fargate-demo
-aws cloudformation delete-stack --stack-name amazon-ecs-cli-setup-private-dns-namespace-$clustername-ecsdemo-frontend
+_cdk destroy
 ```
 
 
