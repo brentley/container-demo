@@ -23,7 +23,8 @@ or
 
 Not using Docker:
 ```bash
-npm install -g aws-cdk
+CDK_VERSION=v0.36.0
+npm install -g aws-cdk@${CDK_VERSION}
 cdk --version
 virtual env .env
 source .env/bin/activate
@@ -31,7 +32,7 @@ pip install --upgrade -r requirements.txt
 ```
 Using Docker:
 ```bash
-CDK_VERSION=v0.35.0
+CDK_VERSION=v0.36.0
 function _cdk { docker run -v $(pwd):/cdk -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -it adam9098/aws-cdk:${CDK_VERSION} $@; }
 ```
 
@@ -52,7 +53,7 @@ git clone https://github.com/brentley/ecsdemo-crystal.git
 ```
 
 ## Build a base stack (VPC, ECS Cluster, Service Discovery Namespace, Base Security Group)
-![infrastructure](../images/private-subnet-public-lb.png)
+![infrastructure](images/private-subnet-public-lb.png)
 ```bash
 cd ~/environment/fargate-demo
 ```
@@ -243,6 +244,7 @@ Just like earlier, we are now bringing up one of our backend API services.
 This service is not registered with any ALB, and instead is only reachable by 
 private IP in the VPC, so we will use service discovery to talk to it. 
 The containers will automatically register with CloudMap on launch.
+```
 
 ## Scale the tasks:
 Open up in an editor of your choice `app.py`, and we will modify the frontend stack and up the desired count from 1 to 3. Simply comment the variable

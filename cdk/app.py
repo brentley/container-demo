@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# CDK v0.35.0
+# CDK v0.36.0
 from aws_cdk import (
     aws_ec2,
     aws_ecs,
@@ -8,13 +8,13 @@ from aws_cdk import (
     aws_elasticloadbalancingv2,
     aws_logs,
     aws_servicediscovery,
-    cdk
+    core,
 )
 
 
-class BaseVPCStack(cdk.Stack):
+class BaseVPCStack(core.Stack):
 
-    def __init__(self, scope: cdk.Stack, id: str, **kwargs):
+    def __init__(self, scope: core.Stack, id=str, **kwargs):
         super().__init__(scope, id, **kwargs)
 
         # This resource alone will create a private/public subnet in each AZ as well as nat/internet gateway(s)
@@ -55,9 +55,9 @@ class BaseVPCStack(cdk.Stack):
         )
 
 
-class FrontendECSService(cdk.Stack):
+class FrontendECSService(core.Stack):
 
-    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
+    def __init__(self, scope: core.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
         super().__init__(scope, id, **kwargs)
         self.ecs_cluster = ecs_cluster
         self.vpc = vpc
@@ -75,7 +75,7 @@ class FrontendECSService(cdk.Stack):
             memory_limit_mi_b=512,
             enable_logging=True,
             desired_count=self.desired_service_count,
-            load_balancer_type=aws_ecs_patterns.LoadBalancerType('Application'),
+            load_balancer_type=aws_ecs_patterns.LoadBalancerType('APPLICATION'),
             public_load_balancer=True,
             environment={
                 "CRYSTAL_URL": "http://ecsdemo-crystal.service:3000/crystal",
@@ -107,13 +107,13 @@ class FrontendECSService(cdk.Stack):
         )        
 
 
-class BackendCrystalECSService(cdk.Stack):
+class BackendCrystalECSService(core.Stack):
 
-    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
+    def __init__(self, scope: core.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
         super().__init__(scope, id, **kwargs)
         self.ecs_cluster = ecs_cluster
         self.vpc = vpc
-        self.service_discovery = self.ecs_cluster.default_namespace
+        self.service_discovery = self.ecs_cluster.default_cloud_map_namespace
         self.services_3000_sec_group = services_3000_sec_group
         self.desired_service_count = desired_service_count
 
@@ -128,7 +128,7 @@ class BackendCrystalECSService(cdk.Stack):
             "BackendCrystalServiceContainer",
             image=aws_ecs.ContainerImage.from_registry("adam9098/ecsdemo-crystal"),
             #image=aws_ecs.ContainerImage.from_registry("brentley/ecsdemo-crystal"),
-            logging=aws_ecs.AwsLogDriver(self, "AWSLogsDriver", stream_prefix="ecsdemo-crystal", log_retention_days=aws_logs.RetentionDays.ThreeDays),
+            logging=aws_ecs.AwsLogDriver(stream_prefix="ecsdemo-crystal", log_retention=aws_logs.RetentionDays.THREE_DAYS),
         )
 
         self.fargate_service = aws_ecs.FargateService(
@@ -136,24 +136,24 @@ class BackendCrystalECSService(cdk.Stack):
             service_name="ecsdemo-crystal",
             task_definition=self.task_definition,
             cluster=self.ecs_cluster,
-            maximum_percent=100,
-            minimum_healthy_percent=0,
+            max_healthy_percent=100,
+            min_healthy_percent=0,
             vpc_subnets=self.vpc.private_subnets,
             desired_count=self.desired_service_count,
-            service_discovery_options={
+            cloud_map_options={
                 "name": "ecsdemo-crystal"
             },
             security_group=self.services_3000_sec_group,
         )
 
 
-class BackendNodeECSService(cdk.Stack):
+class BackendNodeECSService(core.Stack):
 
-    def __init__(self, scope: cdk.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
+    def __init__(self, scope: core.Stack, id: str, ecs_cluster, vpc, services_3000_sec_group, desired_service_count, **kwargs):
         super().__init__(scope, id, **kwargs)
         self.ecs_cluster = ecs_cluster
         self.vpc = vpc
-        self.service_discovery = self.ecs_cluster.default_namespace
+        self.service_discovery = self.ecs_cluster.default_cloud_map_namespace
         self.services_3000_sec_group = services_3000_sec_group
         self.desired_service_count = desired_service_count
 
@@ -166,7 +166,7 @@ class BackendNodeECSService(cdk.Stack):
         self.task_definition.add_container(
             "BackendNodeServiceContainer",
             image=aws_ecs.ContainerImage.from_registry("brentley/ecsdemo-nodejs"),
-            logging=aws_ecs.AwsLogDriver(self, "AWSLogsDriver", stream_prefix="ecsdemo-nodejs", log_retention_days=aws_logs.RetentionDays.ThreeDays),
+            logging=aws_ecs.AwsLogDriver(stream_prefix="ecsdemo-nodejs", log_retention=aws_logs.RetentionDays.THREE_DAYS),
         )
 
         self.fargate_service = aws_ecs.FargateService(
@@ -174,18 +174,18 @@ class BackendNodeECSService(cdk.Stack):
             service_name="ecsdemo-nodejs",
             task_definition=self.task_definition,
             cluster=self.ecs_cluster,
-            maximum_percent=100,
-            minimum_healthy_percent=0,
+            max_healthy_percent=100,
+            min_healthy_percent=0,
             vpc_subnets=self.vpc.private_subnets,
             desired_count=self.desired_service_count,
-            service_discovery_options={
+            cloud_map_options={
                 "name": "ecsdemo-nodejs"
             },
             security_group=self.services_3000_sec_group,
         )
 
 
-class FargateDemo(cdk.App):
+class FargateDemo(core.App):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -219,4 +219,4 @@ class FargateDemo(cdk.App):
 
 if __name__ == '__main__':
     app = FargateDemo()
-    app.run()
+    app.synth()
