@@ -89,17 +89,13 @@ class BaseVPCStack(core.Stack):
         )
 
 
-class FargateDemo(core.App):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self.stack_name = "fargate-demo"
-
-        # Base stack (networking, security groups, etc)
-        self.base_module = BaseVPCStack(self, self.stack_name + "-base")
-
-
 if __name__ == '__main__':
-    app = FargateDemo()
+    from os import environ
+
+    _stack_name = 'fargate-demo'
+    # https://github.com/awslabs/aws-cdk/issues/3082
+    _env = {'account': environ['CDK_DEFAULT_ACCOUNT'],'region': environ['CDK_DEFAULT_REGION']}
+    
+    app = core.App()
+    BaseVPCStack(app, _stack_name + "-base")
     app.synth()
