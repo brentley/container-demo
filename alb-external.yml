@@ -3,7 +3,7 @@ Description: External, public facing load balancer, for forwarding public traffi
 Parameters:
   EnvironmentName:
     Type: String
-    Default: demo
+    Default: container-demo
     Description: The name of the environment to add this load balancer to
 Resources:
   EcsSecurityGroupIngressFromPublicALB:
