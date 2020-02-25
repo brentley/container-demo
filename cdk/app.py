@@ -39,7 +39,13 @@ class BaseVPCStack(core.Stack):
             'NAME': self.ecs_cluster.default_cloud_map_namespace.private_dns_namespace_name,
             'ID': self.ecs_cluster.default_cloud_map_namespace.private_dns_namespace_id,
         }
-
+        
+        # Cluster Attributes
+        self.cluster_outputs = {
+            'NAME': self.ecs_cluster.cluster_name,
+            'SECGRPS': str(self.ecs_cluster.connections.security_groups)
+        }
+        
         # Frontend service to backend services on 3000
         self.services_3000_sec_group = aws_ec2.SecurityGroup(
             self, "FrontendToBackendSecurityGroup",
@@ -63,6 +69,8 @@ class BaseVPCStack(core.Stack):
         core.CfnOutput(self, "NSName", value=self.namespace_outputs['NAME'], export_name="NSNAME")
         core.CfnOutput(self, "NSId", value=self.namespace_outputs['ID'], export_name="NSID")
         core.CfnOutput(self, "FE2BESecGrp", value=self.services_3000_sec_group.security_group_id, export_name="SecGrpId")
+        core.CfnOutput(self, "ECSClusterName", value=self.cluster_outputs['NAME'], export_name="ECSClusterName")
+        core.CfnOutput(self, "ECSClusterSecGrp", value=self.cluster_outputs['SECGRPS'], export_name="ECSSecGrpList")
 
 
 _env = core.Environment(account=getenv('AWS_ACCOUNT_ID'), region=getenv('AWS_DEFAULT_REGION'))
