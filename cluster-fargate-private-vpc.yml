@@ -258,7 +258,7 @@ Resources:
       GroupDescription: Access to the Fargate containers
       VpcId: !Ref 'VPC'
 
-  # A role used to allow AWS Autoscaling to inspect stats and adjust scaleable targets
+  # A role used to allow AWS Autoscaling to inspect stats and adjust scalable targets
   # on your AWS account
   AutoscalingRole:
     Type: AWS::IAM::Role
@@ -314,7 +314,7 @@ Resources:
               - 'ec2:DetachNetworkInterface'
 
               # Rules which allow ECS to update load balancers on your behalf
-              # with the information sabout how to send traffic to your containers
+              # with the information about how to send traffic to your containers
               - 'elasticloadbalancing:DeregisterInstancesFromLoadBalancer'
               - 'elasticloadbalancing:DeregisterTargets'
               - 'elasticloadbalancing:Describe*'

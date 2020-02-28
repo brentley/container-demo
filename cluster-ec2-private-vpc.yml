@@ -134,7 +134,7 @@ Resources:
   # sends network traffic via the internet gateway.
   InternetGateway:
     Type: AWS::EC2::InternetGateway
-  GatewayAttachement:
+  GatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref 'VPC'
@@ -145,7 +145,7 @@ Resources:
       VpcId: !Ref 'VPC'
   PublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: GatewayAttachement
+    DependsOn: GatewayAttachment
     Properties:
       RouteTableId: !Ref 'PublicRouteTable'
       DestinationCidrBlock: '0.0.0.0/0'
@@ -172,17 +172,17 @@ Resources:
   # each private subnet.
   NatGatewayOneAttachment:
     Type: AWS::EC2::EIP
-    DependsOn: GatewayAttachement
+    DependsOn: GatewayAttachment
     Properties:
         Domain: vpc
   NatGatewayTwoAttachment:
     Type: AWS::EC2::EIP
-    DependsOn: GatewayAttachement
+    DependsOn: GatewayAttachment
     Properties:
         Domain: vpc
   NatGatewayThreeAttachment:
     Type: AWS::EC2::EIP
-    DependsOn: GatewayAttachement
+    DependsOn: GatewayAttachment
     Properties:
         Domain: vpc
   NatGatewayOne:
@@ -322,7 +322,7 @@ Resources:
       Path: /
       Roles: [!Ref 'EC2Role']
 
-  # A role used to allow AWS Autoscaling to inspect stats and adjust scaleable targets
+  # A role used to allow AWS Autoscaling to inspect stats and adjust scalable targets
   # on your AWS account
   AutoscalingRole:
     Type: AWS::IAM::Role
@@ -348,7 +348,7 @@ Resources:
             Resource: '*'
 
   # Role for the EC2 hosts. This allows the ECS agent on the EC2 hosts
-  # to communciate with the ECS control plane, as well as download the docker
+  # to communicate with the ECS control plane, as well as download the docker
   # images from ECR to run on your host.
   EC2Role:
     Type: AWS::IAM::Role
