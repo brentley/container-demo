@@ -26,7 +26,7 @@ class BaseVPCStack(core.Stack):
         self.ecs_cluster = aws_ecs.Cluster(
             self, "ECSCluster",
             vpc=self.vpc,
-            cluster_name='container-demo'
+            cluster_name="container-demo"
         )
 
         # Adding service discovery namespace to cluster
