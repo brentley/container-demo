@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# cdk: 1.25.0
+# cdk: 1.41.0
 from aws_cdk import (
     aws_ec2,
     aws_ecs,
@@ -61,7 +61,7 @@ class BaseVPCStack(core.Stack):
         
         # When enabling EC2, we need the security groups "registered" to the cluster for imports in other service stacks
         if self.ecs_cluster.connections.security_groups:
-            self.cluster_outputs['SECGRPS'] = str([x.security_group_id for x in self.ecs_cluster.connections.security_groups])
+            self.cluster_outputs['SECGRPS'] = str([x.security_group_id for x in self.ecs_cluster.connections.security_groups][0])
         
         # Frontend service to backend services on 3000
         self.services_3000_sec_group = aws_ec2.SecurityGroup(
