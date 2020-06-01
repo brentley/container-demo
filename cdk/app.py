@@ -36,14 +36,14 @@ class BaseVPCStack(core.Stack):
         
         ###### CAPACITY PROVIDERS SECTION #####
         # Adding EC2 capacity to the ECS Cluster
-        self.asg = self.ecs_cluster.add_capacity(
-            "ECSEC2Capacity",
-            instance_type=aws_ec2.InstanceType(instance_type_identifier='t3.small'),
-            min_capacity=0,
-            max_capacity=10
-        )
+        #self.asg = self.ecs_cluster.add_capacity(
+        #    "ECSEC2Capacity",
+        #    instance_type=aws_ec2.InstanceType(instance_type_identifier='t3.small'),
+        #    min_capacity=0,
+        #    max_capacity=10
+        #)
         
-        core.CfnOutput(self, "EC2AutoScalingGroupName", value=self.asg.auto_scaling_group_name, export_name="EC2ASGName")
+        #core.CfnOutput(self, "EC2AutoScalingGroupName", value=self.asg.auto_scaling_group_name, export_name="EC2ASGName")
         ##### END CAPACITY PROVIDER SECTION #####
         
         # Namespace details as CFN output
