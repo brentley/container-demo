@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# cdk: 1.25.0
+# cdk: 1.41.0
 from aws_cdk import (
     aws_ec2,
     aws_ecs,
@@ -34,6 +34,18 @@ class BaseVPCStack(core.Stack):
             name="service",
         )
         
+        ###### CAPACITY PROVIDERS SECTION #####
+        # Adding EC2 capacity to the ECS Cluster
+        #self.asg = self.ecs_cluster.add_capacity(
+        #    "ECSEC2Capacity",
+        #    instance_type=aws_ec2.InstanceType(instance_type_identifier='t3.small'),
+        #    min_capacity=0,
+        #    max_capacity=10
+        #)
+        
+        #core.CfnOutput(self, "EC2AutoScalingGroupName", value=self.asg.auto_scaling_group_name, export_name="EC2ASGName")
+        ##### END CAPACITY PROVIDER SECTION #####
+        
         # Namespace details as CFN output
         self.namespace_outputs = {
             'ARN': self.ecs_cluster.default_cloud_map_namespace.private_dns_namespace_arn,
@@ -46,6 +58,10 @@ class BaseVPCStack(core.Stack):
             'NAME': self.ecs_cluster.cluster_name,
             'SECGRPS': str(self.ecs_cluster.connections.security_groups)
         }
+        
+        # When enabling EC2, we need the security groups "registered" to the cluster for imports in other service stacks
+        if self.ecs_cluster.connections.security_groups:
+            self.cluster_outputs['SECGRPS'] = str([x.security_group_id for x in self.ecs_cluster.connections.security_groups][0])
         
         # Frontend service to backend services on 3000
         self.services_3000_sec_group = aws_ec2.SecurityGroup(
