@@ -82,14 +82,13 @@ class BaseVPCStack(core.Stack):
             group_id=self.services_3000_sec_group.security_group_id
         )
         
-        ##CREATING TEMPORARY EC2 INSTANCE TO LOAD TEST NODEJS AND CRYSTAL SERVICES##
-        # Pulling latest AMI that will be used to create the ec2 instance
+        # Creating an EC2 bastion host to perform load test on private backend services
         amzn_linux = aws_ec2.MachineImage.latest_amazon_linux(
             generation=aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
             edition=aws_ec2.AmazonLinuxEdition.STANDARD,
             virtualization=aws_ec2.AmazonLinuxVirt.HVM,
             storage=aws_ec2.AmazonLinuxStorage.GENERAL_PURPOSE
-            )
+        )
 
         # Instance Role/profile that will be attached to the ec2 instance 
         # Enabling service role so the EC2 service can use ssm
@@ -97,7 +96,6 @@ class BaseVPCStack(core.Stack):
 
         # Attaching the SSM policy to the role so we can use SSM to ssh into the ec2 instance
         role.add_managed_policy(aws_iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonEC2RoleforSSM"))
-
 
         # Reading user data, to install siege into the ec2 instance.
         with open("stresstool_user_data.sh") as f:
@@ -113,9 +111,7 @@ class BaseVPCStack(core.Stack):
             user_data=aws_ec2.UserData.custom(user_data),
             security_group=self.services_3000_sec_group
                 )
-
-        
-        
+     
         # All Outputs required for other stacks to build
         core.CfnOutput(self, "NSArn", value=self.namespace_outputs['ARN'], export_name="NSARN")
         core.CfnOutput(self, "NSName", value=self.namespace_outputs['NAME'], export_name="NSNAME")
