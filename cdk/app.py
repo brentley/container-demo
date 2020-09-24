@@ -78,7 +78,7 @@ class BaseVPCStack(core.Stack):
         #        "imageId": aws_ssm.StringParameter.value_for_string_parameter(
         #                    self,
         #                    "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id"),
-        #        "securityGroupIds": [x.security_group_id for x in self.ecs_cluster.connections.security_groups],
+        #        "securityGroupIds": [ x.security_group_id for x in self.ecs_cluster.connections.security_groups ],
         #        "iamInstanceProfile": {"arn": self.ecs_spot_instance_profile.attr_arn},
         #        
         #        # Here we configure the ECS agent to drain Spot Instances upon catching a Spot Interruption notice from instance metadata
@@ -92,7 +92,8 @@ class BaseVPCStack(core.Stack):
         #                "echo ECS_AWSVPC_BLOCK_IMDS=true >> /etc/ecs/ecs.config\n"  
         #                "cat /etc/ecs/ecs.config",
         #                variables = {
-        #                    "cluster_name":self.ecs_cluster.cluster_name}
+        #                    "cluster_name":self.ecs_cluster.cluster_name
+        #                    }
         #                )
         #            )
         #        },
@@ -104,13 +105,13 @@ class BaseVPCStack(core.Stack):
         #    max_size = "10",
         #    vpc_zone_identifier = [ x.subnet_id for x in self.vpc.private_subnets ],
         #    mixed_instances_policy = {
-        #        "instancesDistribution":{
+        #        "instancesDistribution": {
         #            "onDemandAllocationStrategy": "prioritized",
         #            "onDemandBaseCapacity": 0,
         #            "onDemandPercentageAboveCapacity": 0,
         #            "spotAllocationStrategy": "capacity-optimized"
         #            },
-        #        "launchTemplate":{
+        #        "launchTemplate": {
         #            "launchTemplateSpecification": {
         #                "launchTemplateId": self.lt.ref,
         #                "version": self.lt.attr_default_version_number
