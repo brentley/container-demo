@@ -46,6 +46,94 @@ class BaseVPCStack(core.Stack):
         
         #core.CfnOutput(self, "EC2AutoScalingGroupName", value=self.asg.auto_scaling_group_name, export_name="EC2ASGName")
         ##### END CAPACITY PROVIDER SECTION #####
+
+        ###### EC2 SPOT CAPACITY PROVIDER SECTION ######
+        
+        ## As of today, AWS CDK doesn't support Launch Templates on the AutoScaling construct, hence it
+        ## doesn't support Mixed Instances Policy to combine instance types on Auto Scaling and adhere to Spot best practices
+        ## In the meantime, CfnLaunchTemplate and CfnAutoScalingGroup resources are used to configure Spot capacity
+        ## https://github.com/aws/aws-cdk/issues/6734
+        
+        #self.ecs_spot_instance_role = aws_iam.Role(
+        #    self, "ECSSpotECSInstanceRole",
+        #    assumed_by=aws_iam.ServicePrincipal("ec2.amazonaws.com"),
+        #    managed_policies=[
+        #        aws_iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonEC2ContainerServiceforEC2Role"),
+        #        aws_iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonEC2RoleforSSM")
+        #        ]
+        #)
+        #
+        #self.ecs_spot_instance_profile = aws_iam.CfnInstanceProfile(
+        #    self, "ECSSpotInstanceProfile",
+        #    roles = [
+        #            self.ecs_spot_instance_role.role_name
+        #        ]
+        #    )
+        #
+        ## This creates a Launch Template for the Auto Scaling group
+        #self.lt = aws_ec2.CfnLaunchTemplate(
+        #    self, "ECSEC2SpotCapacityLaunchTemplate",
+        #    launch_template_data={
+        #        "instanceType": "m5.large",
+        #        "imageId": aws_ssm.StringParameter.value_for_string_parameter(
+        #                    self,
+        #                    "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id"),
+        #        "securityGroupIds": [x.security_group_id for x in self.ecs_cluster.connections.security_groups],
+        #        "iamInstanceProfile": {"arn": self.ecs_spot_instance_profile.attr_arn},
+        #        
+        #        # Here we configure the ECS agent to drain Spot Instances upon catching a Spot Interruption notice from instance metadata
+        #        "userData": core.Fn.base64(
+        #            core.Fn.sub(
+        #                "#!/usr/bin/bash\n"
+        #                "echo ECS_CLUSTER=${cluster_name} >> /etc/ecs/ecs.config\n" 
+        #                "sudo iptables --insert FORWARD 1 --in-interface docker+ --destination 169.254.169.254/32 --jump DROP\n"
+        #                "sudo service iptables save\n"
+        #                "echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config\n" 
+        #                "echo ECS_AWSVPC_BLOCK_IMDS=true >> /etc/ecs/ecs.config\n"  
+        #                "cat /etc/ecs/ecs.config",
+        #                variables = {
+        #                    "cluster_name":self.ecs_cluster.cluster_name}
+        #                )
+        #            )
+        #        },
+        #        launch_template_name="ECSEC2SpotCapacityLaunchTemplate")
+        #        
+        #self.ecs_ec2_spot_mig_asg = aws_autoscaling.CfnAutoScalingGroup(
+        #    self, "ECSEC2SpotCapacity",
+        #    min_size = "0",
+        #    max_size = "10",
+        #    vpc_zone_identifier = [ x.subnet_id for x in self.vpc.private_subnets ],
+        #    mixed_instances_policy = {
+        #        "instancesDistribution":{
+        #            "onDemandAllocationStrategy": "prioritized",
+        #            "onDemandBaseCapacity": 0,
+        #            "onDemandPercentageAboveCapacity": 0,
+        #            "spotAllocationStrategy": "capacity-optimized"
+        #            },
+        #        "launchTemplate":{
+        #            "launchTemplateSpecification": {
+        #                "launchTemplateId": self.lt.ref,
+        #                "version": self.lt.attr_default_version_number
+        #            },
+        #            "overrides": [
+        #                {"instanceType": "m5.large"},
+        #                {"instanceType": "m5d.large"},
+        #                {"instanceType": "m5a.large"},
+        #                {"instanceType": "m5ad.large"},
+        #                {"instanceType": "m5n.large"},
+        #                {"instanceType": "m5dn.large"},
+        #                {"instanceType": "m3.large"},
+        #                {"instanceType": "m4.large"},
+        #                {"instanceType": "t3.large"},
+        #                {"instanceType": "t2.large"}
+        #            ]
+        #        }
+        #    }
+        #)
+        #
+        #core.Tag.add(self.ecs_ec2_spot_mig_asg, "Name", self.ecs_ec2_spot_mig_asg.node.path)        
+        #
+        ##### END EC2 SPOT CAPACITY PROVIDER SECTION #####
         
         # Namespace details as CFN output
         self.namespace_outputs = {
