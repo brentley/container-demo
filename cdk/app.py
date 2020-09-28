@@ -4,8 +4,10 @@
 from aws_cdk import (
     aws_ec2,
     aws_ecs,
-    core,
     aws_iam,
+    aws_ssm,
+    aws_autoscaling
+    core,
 )
 
 from os import getenv
