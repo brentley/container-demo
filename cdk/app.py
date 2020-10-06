@@ -110,7 +110,7 @@ class BaseVPCStack(core.Stack):
         #        "instancesDistribution": {
         #            "onDemandAllocationStrategy": "prioritized",
         #            "onDemandBaseCapacity": 0,
-        #            "onDemandPercentageAboveCapacity": 0,
+        #            "onDemandPercentageAboveBaseCapacity": 0,
         #            "spotAllocationStrategy": "capacity-optimized"
         #            },
         #        "launchTemplate": {
